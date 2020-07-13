@@ -12,6 +12,7 @@ pub struct Config {
     pub token: String,
     pub group: i64,
     pub last: i64,
+    pub locks: Vec<i64>,
 }
 
 lazy_static! {
@@ -26,6 +27,7 @@ pub fn load() -> Config {
                 token: String::new(),
                 group: 0,
                 last: 0,
+                locks: Vec::new(),
             }).unwrap().as_bytes()
         ).unwrap();
         println!("config created");
