@@ -14,11 +14,6 @@ async fn main() {
         let update = update.unwrap();
         if let UpdateKind::Message(update_message) = update.kind {
             if let MessageKind::Text { ref data, .. } = &update_message.kind {
-                let user: i64 = update_message.from.id.into();
-                if config.locks.contains(&user) {
-                    api.send(update_message.text_reply("笔记本对你上锁了哦")).await.unwrap();
-                    continue;
-                }
                 let admins: Vec<ChatMember> = api.send(
                     GetChatAdministrators::new(ChatId::new(config.group))
                 ).await.unwrap();
@@ -28,6 +23,11 @@ async fn main() {
                         api.send(update_message.text_reply(id.to_string())).await.unwrap();
                     }
                     "/note" => {
+                        let user: i64 = update_message.from.id.into();
+                        if config.locks.contains(&user) {
+                            api.send(update_message.text_reply("笔记本对你上锁了哦")).await.unwrap();
+                            continue;
+                        }
                         if let Some(reply) = &update_message.reply_to_message {
                             let last_message: Message = api.send(ForwardMessage::new(
                                 reply.to_message_id(),
@@ -37,6 +37,8 @@ async fn main() {
                             config.last = last_message.id.into();
                             config.save();
                             api.send(update_message.text_reply("记笔记。。。")).await.unwrap();
+                        }else{
+                            api.send(update_message.text_reply("你到底想记什么呢。。。")).await.unwrap();
                         }
                     }
                     "/review" => {
