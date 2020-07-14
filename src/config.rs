@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{env, process, fs};
-use std::fs::{File, OpenOptions};
+use std::fs::File;
 use std::io::Write;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
@@ -37,7 +37,7 @@ pub fn load() -> Config {
 
 impl Config {
     pub fn save(&self) {
-        let mut config_file = OpenOptions::new().write(true).open(&*CONFIG_PATH).unwrap();
+        let mut config_file = File::create(&*CONFIG_PATH).unwrap();
         config_file.write_all(
             serde_json::to_string_pretty(self).unwrap().as_bytes()
         ).unwrap();
