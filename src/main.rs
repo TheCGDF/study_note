@@ -7,7 +7,6 @@ use rand::Rng;
 #[tokio::main]
 async fn main() {
     let mut config = config::load();
-    let mut notes: Vec<i64> = Vec::new();
     let mut rng = rand::thread_rng();
     let api = Api::new(&config.token);
     let mut stream = api.stream();
@@ -34,42 +33,45 @@ async fn main() {
                                 reply.to_message_id(),
                                 &update_message.chat,
                                 ChatId::new(config.group))).await.unwrap();
-                            notes.push(last_message.id.into());
+                            config.notes.push(last_message.id.into());
                             config.last = last_message.id.into();
                             config.save();
-                            api.send(&update_message.text_reply("记笔记。。。")).await.unwrap();
+                            api.send(update_message.text_reply("记笔记。。。")).await.unwrap();
                         }
                     }
                     "/review" => {
-                        if notes.is_empty() {
-                            api.send(&update_message.text_reply("还没有笔记哦")).await.unwrap();
+                        if config.notes.is_empty() {
+                            api.send(update_message.text_reply("还没有笔记哦")).await.unwrap();
+                            continue;
                         }
                         api.send(ForwardMessage::new(
-                            MessageId::new(notes[rng.gen_range(0, notes.len())]),
+                            MessageId::new(config.notes[rng.gen_range(0, config.notes.len())]),
                             ChatId::new(config.group.into()),
                             &update_message.chat,
                         )).await.unwrap();
                     }
                     "/cram" => {
-                        if notes.is_empty() {
-                            api.send(&update_message.text_reply("还没有笔记哦")).await.unwrap();
+                        if config.notes.is_empty() {
+                            api.send(update_message.text_reply("还没有笔记哦")).await.unwrap();
+                            continue;
                         }
-                        for _ in 1..5 {
+                        for _ in 0..5 {
                             api.send(ForwardMessage::new(
-                                MessageId::new(notes[rng.gen_range(0, notes.len())]),
+                                MessageId::new(config.notes[rng.gen_range(0, config.notes.len())]),
                                 ChatId::new(config.group.into()),
                                 &update_message.chat,
                             )).await.unwrap();
                         }
                     }
                     "/learned" => {
-                        let chat: i64 = *&update_message.chat.id().into();
+                        let chat: i64 = update_message.chat.id().into();
                         if chat != config.group {
                             continue;
                         }
-                        if let Some(reply) = &update_message.reply_to_message {
+                        if let Some(reply) = update_message.reply_to_message {
                             let reply_id: i64 = reply.to_message_id().into();
-                            notes.retain(|&note| note != reply_id);
+                            config.notes.retain(|&note| note != reply_id);
+                            config.save();
                             api.send(
                                 DeleteMessage::new(ChatId::new(config.group), MessageId::new(reply_id))
                             ).await.unwrap();
@@ -92,12 +94,12 @@ async fn main() {
                         if let Some(reply) = &update_message.reply_to_message {
                             match &**reply {
                                 MessageOrChannelPost::ChannelPost(_) => {
-                                    api.send(&update_message.text_reply("不能对频道上锁。。。")).await.unwrap();
+                                    api.send(update_message.text_reply("不能对频道上锁。。。")).await.unwrap();
                                 }
                                 MessageOrChannelPost::Message(message) => {
                                     config.locks.push(message.from.id.into());
                                     config.save();
-                                    api.send(&update_message.text_reply("笔记已对其上锁。。。")).await.unwrap();
+                                    api.send(update_message.text_reply("笔记已对其上锁。。。")).await.unwrap();
                                 }
                             }
                         }
@@ -116,13 +118,13 @@ async fn main() {
                         if let Some(reply) = &update_message.reply_to_message {
                             match &**reply {
                                 MessageOrChannelPost::ChannelPost(_) => {
-                                    api.send(&update_message.text_reply("频道无需解锁。。。")).await.unwrap();
+                                    api.send(update_message.text_reply("频道无需解锁。。。")).await.unwrap();
                                 }
                                 MessageOrChannelPost::Message(message) => {
                                     let user_locked: i64 = message.from.id.into();
                                     config.locks.retain(|&item| item != user_locked);
                                     config.save();
-                                    api.send(&update_message.text_reply("笔记已对其上锁。。。")).await.unwrap();
+                                    api.send(update_message.text_reply("笔记已对其上锁。。。")).await.unwrap();
                                 }
                             }
                         }

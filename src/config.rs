@@ -5,14 +5,15 @@ use std::io::Write;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
 
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Config {
     pub token: String,
     pub group: i64,
+    //for future usage
     pub last: i64,
     pub locks: Vec<i64>,
+    pub notes: Vec<i64>,
 }
 
 lazy_static! {
@@ -23,12 +24,7 @@ pub fn load() -> Config {
     if !CONFIG_PATH.exists() {
         let mut config_file = File::create(&*CONFIG_PATH).unwrap();
         config_file.write_all(
-            serde_json::to_string_pretty(&Config {
-                token: String::new(),
-                group: 0,
-                last: 0,
-                locks: Vec::new(),
-            }).unwrap().as_bytes()
+            serde_json::to_string_pretty(&Config { ..Default::default() }).unwrap().as_bytes()
         ).unwrap();
         println!("config created");
         process::exit(0);
