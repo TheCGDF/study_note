@@ -1,6 +1,6 @@
 pub mod config;
 
-use telegram_bot::{UpdateKind, MessageKind, Api, MessageOrChannelPost, ForwardMessage, ChatId, CanReplySendMessage, Message, MessageId, GetChatAdministrators, ChatMember, ToMessageId, DeleteMessage, SendMessage, ParseMode};
+use telegram_bot::{UpdateKind, MessageKind, Api, MessageOrChannelPost, ForwardMessage, ChatId, CanReplySendMessage, Message, MessageId, GetChatAdministrators, ChatMember, ToMessageId, DeleteMessage, SendMessage, ParseMode, MessageText};
 use futures::StreamExt;
 use rand::Rng;
 
@@ -39,7 +39,7 @@ async fn main() {
                             let user: i64 = update_message.from.id.into();
                             api.send(SendMessage::new(
                                 ChatId::new(config.group),
-                                format!("——[{0}](tg://user?id={0})", user),
+                                format!("[——](tg://user?id={})", user),
                             ).parse_mode(ParseMode::Markdown)).await;
                             let last_message: Message = last_message_result.unwrap();
                             config.notes.push(last_message.id.into());
@@ -111,14 +111,36 @@ async fn main() {
                             continue;
                         }
                         if let Some(reply) = &update_message.reply_to_message {
+                            let chat: i64 = update_message.chat.id().into();
                             match &**reply {
                                 MessageOrChannelPost::ChannelPost(_) => {
                                     api.send(update_message.text_reply("不能对频道上锁。。。")).await;
                                 }
                                 MessageOrChannelPost::Message(message) => {
-                                    config.locks.push(message.from.id.into());
-                                    config.save();
-                                    api.send(update_message.text_reply("笔记已对其上锁。。。")).await;
+                                    if chat != config.group {
+                                        config.locks.push(message.from.id.into());
+                                        config.save();
+                                        api.send(update_message.text_reply("笔记已对其上锁。。。")).await;
+                                    } else {
+                                        let user_result = message.text().unwrap()
+                                            .replace("[——](tg://user?id=", "")
+                                            .trim_end_matches(')').parse::<i64>();
+                                        if user_result.is_ok() {
+                                            let user = user_result.unwrap();
+                                            config.locks.push(user);
+                                            api.send(DeleteMessage::new(
+                                                ChatId::new(config.group),
+                                                MessageId::new(user - 1),
+                                            )).await;
+                                            api.send(DeleteMessage::new(
+                                                ChatId::new(config.group),
+                                                MessageId::new(user),
+                                            )).await;
+                                        }
+                                        api.send(DeleteMessage::new(
+                                            ChatId::new(config.group),
+                                            update_message.id)).await;
+                                    }
                                 }
                             }
                         }
