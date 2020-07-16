@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
+use std::collections::HashSet;
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -12,7 +13,7 @@ pub struct Config {
     pub group: i64,
     //for future usage
     pub last: i64,
-    pub locks: Vec<i64>,
+    pub locks: HashSet<i64>,
     pub notes: Vec<i64>,
 }
 
