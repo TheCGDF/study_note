@@ -92,7 +92,7 @@ async fn main() {
                             )).await;
                             api.send(DeleteMessage::new(
                                 ChatId::new(config.group),
-                                MessageId::new(note_id - 1),
+                                MessageId::new(note_id + 1),
                             )).await;
                         }
                         api.send(DeleteMessage::new(
