@@ -36,7 +36,6 @@ async fn main() {
                             if last_message_result.is_err() {
                                 continue;
                             }
-                            let user: i64 = update_message.from.id.into();
                             api.send(SendMessage::new(
                                 ChatId::new(config.group),
                                 format!("——[{0}](tg://user?id={0})", user),
@@ -125,8 +124,7 @@ async fn main() {
                                         let user_result = message.text().unwrap()
                                             .replace("——", "").parse::<i64>();
                                         if user_result.is_ok() {
-                                            let user = user_result.unwrap();
-                                            config.locks.insert(user);
+                                            config.locks.insert(user_result.unwrap());
                                             let message_id: i64 = message.id.into();
                                             api.send(DeleteMessage::new(
                                                 ChatId::new(config.group),
@@ -164,7 +162,6 @@ async fn main() {
                                     api.send(update_message.text_reply("频道无需解锁。。。")).await;
                                 }
                                 MessageOrChannelPost::Message(message) => {
-                                    let user_locked: i64 = message.from.id.into();
                                     config.locks.remove(&message.from.id.into());
                                     config.save();
                                     api.send(update_message.text_reply("笔记已对其上锁。。。")).await;
