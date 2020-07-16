@@ -1,6 +1,6 @@
 pub mod config;
 
-use telegram_bot::{UpdateKind, MessageKind, Api, MessageOrChannelPost, ForwardMessage, ChatId, CanReplySendMessage, Message, MessageId, GetChatAdministrators, ChatMember, ToMessageId, DeleteMessage};
+use telegram_bot::{UpdateKind, MessageKind, Api, MessageOrChannelPost, ForwardMessage, ChatId, CanReplySendMessage, Message, MessageId, GetChatAdministrators, ChatMember, ToMessageId, DeleteMessage, SendMessage, ParseMode};
 use futures::StreamExt;
 use rand::Rng;
 
@@ -29,6 +29,11 @@ async fn main() {
                             continue;
                         }
                         if let Some(reply) = &update_message.reply_to_message {
+                            let user: i64 = update_message.from.id.into();
+                            api.send(SendMessage::new(
+                                ChatId::new(config.group),
+                                format!("[{0}](tg://user?id={0}):", user),
+                            ).parse_mode(ParseMode::Markdown)).await;
                             let last_message_result = api.send(ForwardMessage::new(
                                 reply.to_message_id(),
                                 &update_message.chat,
@@ -75,12 +80,19 @@ async fn main() {
                             continue;
                         }
                         if let Some(reply) = update_message.reply_to_message {
-                            let reply_id: i64 = reply.to_message_id().into();
-                            config.notes.retain(|&note| note != reply_id);
+                            let mut note_id: i64 = reply.to_message_id().into();
+                            if !config.notes.contains(&note_id) {
+                                note_id = note_id + 1;
+                            }
+                            config.notes.retain(|&note| note != note_id);
                             config.save();
                             api.send(DeleteMessage::new(
                                 ChatId::new(config.group),
-                                MessageId::new(reply_id),
+                                MessageId::new(note_id),
+                            )).await;
+                            api.send(DeleteMessage::new(
+                                ChatId::new(config.group),
+                                MessageId::new(note_id - 1),
                             )).await;
                         }
                         api.send(DeleteMessage::new(
