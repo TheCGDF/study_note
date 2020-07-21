@@ -20,7 +20,7 @@ async fn main() {
                 if datas.is_empty() {
                     continue;
                 }
-                match datas.swap_remove(0).replace("@study_note_bot", "").as_str() {
+                match datas.swap_remove(0).replace(&config.name, "").as_str() {
                     "/id" => {
                         let id: i64 = update_message.chat.id().into();
                         api.send(update_message.text_reply(id.to_string())).await;
