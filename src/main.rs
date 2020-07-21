@@ -172,7 +172,7 @@ async fn main() {
                         if let MessageOrChannelPost::Message(message) = *reply {
                             config.locks.remove(&message.from.id.into());
                             config.save();
-                            api.send(update_message.text_reply("笔记已对其上锁。。。")).await;
+                            api.send(update_message.text_reply("笔记不再对其上锁。。。")).await;
                         }
                     }
                     "/keyword" => {
