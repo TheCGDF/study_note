@@ -175,7 +175,7 @@ async fn main() {
                             api.send(update_message.text_reply("笔记不再对其上锁。。。")).await;
                         }
                     }
-                    "/keyword" => {
+                    "/keywords" => {
                         let user: i64 = update_message.from.id.into();
                         if config.locks.contains(&user) {
                             api.send(update_message.text_reply("笔记本对你上锁了哦")).await;
@@ -193,12 +193,15 @@ async fn main() {
                         if last_message_result.is_err() {
                             continue;
                         }
+                        let datas_simplified: Vec<String> = datas.iter().map(|keyword|
+                            simplet2s::convert(keyword)
+                        ).collect();
                         api.send(SendMessage::new(
                             ChatId::new(config.group),
-                            format!("——[{0}](tg://user?id={0}) {1}", user, datas.join(" ")),
+                            format!("——[{0}](tg://user?id={0}) {1}", user, datas_simplified.join(" ")),
                         ).parse_mode(ParseMode::Markdown)).await;
                         let last_message: Message = last_message_result.unwrap();
-                        config.answers.push((last_message.id.into(), datas.into_iter().map(Into::into).collect()));
+                        config.answers.push((last_message.id.into(), datas_simplified));
                         config.save();
                         api.send(update_message.text_reply("设置完成。。。")).await;
                     }
@@ -206,9 +209,10 @@ async fn main() {
                         if rng.gen_range(0, 2) != 0 {
                             continue;
                         }
+                        let simplified = simplet2s::convert(data);
                         for answer in &config.answers {
                             for keyword in &answer.1 {
-                                if data.contains(keyword) {
+                                if simplified.contains(keyword) {
                                     if rng.gen_range(0, 2) != 0 {
                                         break;
                                     }
