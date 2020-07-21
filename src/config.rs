@@ -11,10 +11,9 @@ use std::collections::HashSet;
 pub struct Config {
     pub token: String,
     pub group: i64,
-    //for future usage
-    pub last: i64,
     pub locks: HashSet<i64>,
     pub notes: Vec<i64>,
+    pub answers: Vec<(i64, Vec<String>)>,
 }
 
 lazy_static! {
