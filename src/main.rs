@@ -11,6 +11,7 @@ async fn main() {
     let mut rng = rand::thread_rng();
     let api = Api::new(&config.token);
     let mut stream = api.stream();
+    let mut noisy = false;
     while let Some(update) = stream.next().await {
         if let Ok(Update { kind: UpdateKind::Message(update_message), .. }) = update {
             if let MessageKind::Text { data, .. } = &update_message.kind {
@@ -29,7 +30,7 @@ async fn main() {
                     "/note" => {
                         let user: i64 = update_message.from.id.into();
                         if config.locks.contains(&user) {
-                            api.send(update_message.text_reply("笔记本对你上锁了哦")).await;
+                            api.send(update_message.text_reply("笔记本对你上锁了哦🔒")).await;
                             continue;
                         }
                         if update_message.reply_to_message.is_none() {
@@ -52,11 +53,11 @@ async fn main() {
                         let last_message: Message = last_message_result.unwrap();
                         config.notes.push(last_message.id.into());
                         config.save();
-                        api.send(update_message.text_reply("记笔记。。。")).await;
+                        api.send(update_message.text_reply("记笔记。。。📝")).await;
                     }
                     "/review" => {
                         if config.notes.is_empty() {
-                            api.send(update_message.text_reply("还没有笔记哦")).await;
+                            api.send(update_message.text_reply("还没有笔记哦📖")).await;
                             continue;
                         }
                         api.send(ForwardMessage::new(
@@ -67,12 +68,16 @@ async fn main() {
                     }
                     "/cram" => {
                         let user: i64 = update_message.from.id.into();
+                        if !noisy {
+                            api.send(update_message.text_reply("安静模式无法发动考前突击🔕")).await;
+                            continue;
+                        }
                         if config.locks.contains(&user) {
-                            api.send(update_message.text_reply("被锁的学渣无法使用考前突击")).await;
+                            api.send(update_message.text_reply("被锁的学渣无法发动考前突击🔒")).await;
                             continue;
                         }
                         if config.notes.is_empty() {
-                            api.send(update_message.text_reply("还没有笔记哦")).await;
+                            api.send(update_message.text_reply("还没有笔记哦📖")).await;
                             continue;
                         }
                         for _ in 0..5 {
@@ -125,7 +130,7 @@ async fn main() {
                                 if chat != config.group {
                                     config.locks.insert(message.from.id.into());
                                     config.save();
-                                    api.send(update_message.text_reply("笔记已对其上锁。。。")).await;
+                                    api.send(update_message.text_reply("笔记已对其上锁🔒")).await;
                                     continue;
                                 }
                                 let user_result = message.text().unwrap()["——".len()..]
@@ -161,13 +166,13 @@ async fn main() {
                         if let MessageOrChannelPost::Message(message) = *reply {
                             config.locks.remove(&message.from.id.into());
                             config.save();
-                            api.send(update_message.text_reply("笔记不再对其上锁。。。")).await;
+                            api.send(update_message.text_reply("笔记不再对其上锁🔓")).await;
                         }
                     }
                     "/keywords" => {
                         let user: i64 = update_message.from.id.into();
                         if config.locks.contains(&user) {
-                            api.send(update_message.text_reply("笔记本对你上锁了哦")).await;
+                            api.send(update_message.text_reply("笔记本对你上锁了哦🔒")).await;
                             continue;
                         }
                         if update_message.reply_to_message.is_none() || datas.is_empty() {
@@ -192,10 +197,18 @@ async fn main() {
                         let last_message: Message = last_message_result.unwrap();
                         config.answers.push((last_message.id.into(), datas_converted));
                         config.save();
-                        api.send(update_message.text_reply("设置完成。。。")).await;
+                        api.send(update_message.text_reply("设置完成✅")).await;
+                    }
+                    "/silence" => {
+                        noisy = false;
+                        api.send(update_message.text_reply("做一个安静的bot🔕")).await;
+                    }
+                    "/noisy" => {
+                        noisy = true;
+                        api.send(update_message.text_reply("奇怪的开关被打开了。。。🔛")).await;
                     }
                     _ => {
-                        if rng.gen_range(0, 2) != 0 {
+                        if !noisy && rng.gen_range(0, 2) != 0 {
                             continue;
                         }
                         let converted = simplet2s::convert(&data.to_lowercase());
@@ -210,6 +223,7 @@ async fn main() {
                                     &update_message.chat,
                                 )).await;
                             }
+                            break;
                         }
                     }
                 }
