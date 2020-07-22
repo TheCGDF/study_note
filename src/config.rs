@@ -12,6 +12,7 @@ pub struct Config {
     pub token: String,
     pub name: String,
     pub group: i64,
+    pub silences: HashSet<i64>,
     pub locks: HashSet<i64>,
     pub notes: Vec<i64>,
     pub answers: Vec<(i64, Vec<String>)>,

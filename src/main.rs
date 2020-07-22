@@ -11,7 +11,6 @@ async fn main() {
     let mut rng = rand::thread_rng();
     let api = Api::new(&config.token);
     let mut stream = api.stream();
-    let mut noisy = false;
     while let Some(update) = stream.next().await {
         if let Ok(Update { kind: UpdateKind::Message(update_message), .. }) = update {
             if let MessageKind::Text { data, .. } = &update_message.kind {
@@ -38,7 +37,6 @@ async fn main() {
                             continue;
                         }
                         let reply = update_message.reply_to_message.clone().unwrap();
-
                         let last_message_result = api.send(ForwardMessage::new(
                             reply.to_message_id(),
                             &update_message.chat,
@@ -68,7 +66,7 @@ async fn main() {
                     }
                     "/cram" => {
                         let user: i64 = update_message.from.id.into();
-                        if !noisy {
+                        if config.silences.contains(&update_message.chat.id().into()) {
                             api.send(update_message.text_reply("安静模式无法发动考前突击🔕")).await;
                             continue;
                         }
@@ -197,18 +195,27 @@ async fn main() {
                         let last_message: Message = last_message_result.unwrap();
                         config.answers.push((last_message.id.into(), datas_converted));
                         config.save();
-                        api.send(update_message.text_reply("设置完成✅")).await;
+                        if config.silences.contains(&update_message.chat.id().into()) {
+                            api.send(
+                                update_message.text_reply("设置完成✅，但bot在当前群组中为安静模式，因此不会触发回复🔕")
+                            ).await;
+                        } else {
+                            api.send(update_message.text_reply("设置完成✅")).await;
+                        }
                     }
                     "/silence" => {
-                        noisy = false;
+                        config.silences.insert(update_message.chat.id().into());
+                        config.save();
                         api.send(update_message.text_reply("做一个安静的bot🔕")).await;
                     }
                     "/noisy" => {
-                        noisy = true;
+                        config.silences.remove(&update_message.chat.id().into());
+                        config.save();
                         api.send(update_message.text_reply("奇怪的开关被打开了。。。🔛")).await;
                     }
                     _ => {
-                        if !noisy && rng.gen_range(0, 2) != 0 {
+                        if config.silences.contains(&update_message.chat.id().into()) &&
+                            rng.gen_range(0, 2) != 0 {
                             continue;
                         }
                         let converted = simplet2s::convert(&data.to_lowercase());
