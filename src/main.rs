@@ -214,7 +214,7 @@ async fn main() {
                         api.send(update_message.text_reply("奇怪的开关被打开了。。。🔛")).await;
                     }
                     _ => {
-                        if config.silences.contains(&update_message.chat.id().into()) &&
+                        if config.silences.contains(&update_message.chat.id().into()) ||
                             rng.gen_range(0, 2) != 0 {
                             continue;
                         }
