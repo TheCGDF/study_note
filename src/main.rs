@@ -229,8 +229,8 @@ async fn main() {
                                     ChatId::new(config.group.into()),
                                     &update_message.chat,
                                 )).await;
+                                break;
                             }
-                            break;
                         }
                     }
                 }
