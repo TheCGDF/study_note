@@ -14,8 +14,8 @@ pub struct Config {
     pub group: i64,
     pub silences: HashSet<i64>,
     pub locks: HashSet<i64>,
-    pub notes: Vec<i64>,
-    pub answers: Vec<(i64, Vec<String>)>,
+    pub notes: Vec<(i64, i64)>,
+    pub answers: Vec<(i64, i64, Vec<String>)>,
 }
 
 lazy_static! {
