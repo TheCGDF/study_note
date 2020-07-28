@@ -5,6 +5,7 @@ use std::io::Write;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
 use std::collections::HashSet;
+use std::sync::Mutex;
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -20,6 +21,7 @@ pub struct Config {
 
 lazy_static! {
     static ref CONFIG_PATH: PathBuf = env::current_exe().unwrap().parent().unwrap().join("config");
+    pub static ref CONFIG:Mutex<Config>= Mutex::new(load());
 }
 
 pub fn load() -> Config {
