@@ -32,11 +32,9 @@ pub fn load() -> Config {
         ).unwrap();
         println!("config created");
         process::exit(0);
-    } else {
-        let config_content = fs::read_to_string(&*CONFIG_PATH).unwrap();
-        let config: Config = serde_json::from_str(&config_content).unwrap();
-        return config;
     }
+    let config_content = fs::read_to_string(&*CONFIG_PATH).unwrap();
+    return serde_json::from_str::<Config>(&config_content).unwrap();
 }
 
 impl Config {

@@ -4,10 +4,9 @@ pub mod config;
 use telegram_bot::{UpdateKind, MessageKind, Api, Update};
 use futures::StreamExt;
 use lazy_static::lazy_static;
-use config::CONFIG;
 
 lazy_static! {
-    pub static ref API:Api=Api::new(&CONFIG.lock().unwrap().token);
+    pub static ref API:Api=Api::new(config::load().token);
 }
 
 #[tokio::main]
