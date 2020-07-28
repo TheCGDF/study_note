@@ -6,6 +6,8 @@ use crate::API;
 use rand::Rng;
 use std::cmp::min;
 use rand::seq::SliceRandom;
+use std::sync::Mutex;
+use chrono::{Utc, DateTime};
 
 lazy_static! {
     static ref HARSH :Harsh = Harsh::builder()
@@ -13,28 +15,34 @@ lazy_static! {
         .length(8)
         .build()
         .unwrap();
+    pub static ref LAST:Mutex<DateTime<Utc>>= Mutex::new(Utc::now());
 }
 
 impl Config {
     pub async fn command(&self, update_message: &Message, data: &String) {
+        let mut last = LAST.lock().unwrap();
+        if Utc::now().signed_duration_since(*last).num_seconds() < 20 {
+            return;
+        }
         let mut rng = rand::thread_rng();
         if self.silences.contains(&update_message.chat.id().into()) ||
-            rng.gen_range(0, 2) != 0 {
+            rng.gen_range(0, 4) != 0 {
             return;
         }
         let converted = simplet2s::convert(&data.to_lowercase());
         let mut answers = self.answers.clone();
         answers.shuffle(&mut rng);
-        for answer in answers {
-            if answer.2.iter().any(|keyword| converted.contains(keyword)) &&
-                rng.gen_range(0, 2) != 0 {
-                let _ = API.send(ForwardMessage::new(
-                    MessageId::new(answer.0),
-                    ChatId::new(self.group.into()),
-                    &update_message.chat,
-                )).await;
-                return;
-            }
+        if let Some(answer) = answers.iter().filter(|answer|
+            answer.2.iter().any(|keyword|
+                converted.contains(keyword)
+            )
+        ).next() {
+            let _ = API.send(ForwardMessage::new(
+                MessageId::new(answer.0),
+                ChatId::new(self.group.into()),
+                &update_message.chat,
+            )).await;
+            *last = Utc::now();
         }
     }
 
