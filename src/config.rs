@@ -4,8 +4,9 @@ use std::fs::File;
 use std::io::Write;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use std::sync::Mutex;
+use chrono::{DateTime, Utc};
 
 #[derive(Default, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -17,6 +18,7 @@ pub struct Config {
     pub locks: HashSet<i64>,
     pub notes: Vec<(i64, i64)>,
     pub answers: Vec<(i64, i64, Vec<String>)>,
+    pub lasts: HashMap<i64, DateTime<Utc>>,
 }
 
 lazy_static! {

@@ -6,8 +6,7 @@ use crate::API;
 use rand::Rng;
 use std::cmp::min;
 use rand::seq::SliceRandom;
-use std::sync::Mutex;
-use chrono::{Utc, DateTime};
+use chrono::Utc;
 
 lazy_static! {
     static ref HARSH :Harsh = Harsh::builder()
@@ -15,14 +14,17 @@ lazy_static! {
         .length(8)
         .build()
         .unwrap();
-    pub static ref LAST:Mutex<DateTime<Utc>>= Mutex::new(Utc::now());
 }
 
 impl Config {
-    pub async fn command(&self, update_message: &Message, data: &String) {
-        let mut last = LAST.lock().unwrap();
-        if Utc::now().signed_duration_since(*last).num_seconds() < 20 {
-            return;
+    pub async fn command(&mut self, update_message: &Message, data: &String) {
+        let chat: i64 = update_message.chat.id().into();
+        let last_option = self.lasts.get(&chat);
+        if let Some(last) = last_option {
+            println!("{:?}", last);
+            if Utc::now().signed_duration_since(*last).num_seconds() < 20 {
+                return;
+            }
         }
         let mut rng = rand::thread_rng();
         if self.silences.contains(&update_message.chat.id().into()) ||
@@ -42,7 +44,8 @@ impl Config {
                 ChatId::new(self.group.into()),
                 &update_message.chat,
             )).await;
-            *last = Utc::now();
+            self.lasts.insert(chat, Utc::now());
+            self.save();
         }
     }
 
