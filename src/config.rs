@@ -17,7 +17,7 @@ pub struct Config {
     pub locks: HashSet<i64>,
     pub notes: Vec<(i64, i64)>,
     pub answers: Vec<(i64, i64, Vec<String>)>,
-    pub groups: HashMap<i64, (bool, DateTime<Utc>)>,
+    pub chats: HashMap<i64, (bool, DateTime<Utc>)>,
 }
 
 lazy_static! {

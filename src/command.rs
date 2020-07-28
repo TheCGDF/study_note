@@ -18,12 +18,12 @@ lazy_static! {
 
 impl Config {
     pub async fn command(&mut self, update_message: &Message, data: &String) {
-        let chat: i64 = update_message.chat.id().into();
+        let chat_id: i64 = update_message.chat.id().into();
         let mut noisy = true;
-        let group_option = self.groups.get(&chat);
-        if let Some(group) = group_option {
-            noisy = group.0;
-            if !group.0 || Utc::now().signed_duration_since(group.1).num_seconds() < 20 {
+        let chat_option = self.chats.get(&chat_id);
+        if let Some(chat) = chat_option {
+            noisy = chat.0;
+            if !chat.0 || Utc::now().signed_duration_since(chat.1).num_seconds() < 20 {
                 return;
             }
         }
@@ -44,14 +44,14 @@ impl Config {
                 ChatId::new(self.group.into()),
                 &update_message.chat,
             )).await;
-            self.groups.insert(chat, (noisy, Utc::now()));
+            self.chats.insert(chat_id, (noisy, Utc::now()));
             self.save();
         }
     }
 
     pub async fn command_cram(&self, update_message: Message) {
         let chat: i64 = update_message.chat.id().into();
-        let group_option = self.groups.get(&chat);
+        let group_option = self.chats.get(&chat);
         if let Some(group) = group_option {
             if group.0 == false {
                 let _ = API.send(update_message.text_reply("安静模式无法发动考前突击🔕")).await;
@@ -182,7 +182,7 @@ impl Config {
         let answer_id: i64 = answer.id.into();
         self.answers.push((answer_id, user, params_converted));
         self.save();
-        let group_option = self.groups.get(&update_message.chat.id().into());
+        let group_option = self.chats.get(&update_message.chat.id().into());
         if let Some(group) = group_option {
             if !group.0 {
                 let _ = API.send(update_message.text_reply(
@@ -349,14 +349,14 @@ impl Config {
     }
 
     pub async fn command_noisy(&mut self, update_message: Message) {
-        let chat: i64 = update_message.chat.id().into();
-        let group_option = self.groups.get(&chat);
-        if group_option.is_none() {
-            self.groups.insert(chat, (true, Utc::now() - Duration::seconds(20)));
+        let chat_id: i64 = update_message.chat.id().into();
+        let chat_option = self.chats.get(&chat_id);
+        if chat_option.is_none() {
+            self.chats.insert(chat_id, (true, Utc::now() - Duration::seconds(20)));
         } else {
-            let mut group = *group_option.unwrap();
-            group.0 = true;
-            self.groups.insert(chat, group);
+            let mut chat = *chat_option.unwrap();
+            chat.0 = true;
+            self.chats.insert(chat_id, chat);
         }
         self.save();
         let _ = API.send(update_message.text_reply("奇怪的开关被打开了。。。🔛")).await;
@@ -418,14 +418,14 @@ impl Config {
     }
 
     pub async fn command_silence(&mut self, update_message: Message) {
-        let chat: i64 = update_message.chat.id().into();
-        let group_option = self.groups.get(&chat);
-        if group_option.is_none() {
-            self.groups.insert(chat, (true, Utc::now() - Duration::seconds(20)));
+        let chat_id: i64 = update_message.chat.id().into();
+        let chat_option = self.chats.get(&chat_id);
+        if chat_option.is_none() {
+            self.chats.insert(chat_id, (true, Utc::now() - Duration::seconds(20)));
         } else {
-            let mut group = *group_option.unwrap();
-            group.0 = false;
-            self.groups.insert(chat, group);
+            let mut chat = *chat_option.unwrap();
+            chat.0 = false;
+            self.chats.insert(chat_id, chat);
         }
         self.save();
         let _ = API.send(update_message.text_reply("做一个安静的bot🔕")).await;
