@@ -21,7 +21,7 @@ async fn main() {
                     continue;
                 }
                 match params[0].replace(&config.name, "").as_str() {
-                    "/id" => config.command_cram(update_message).await,
+                    "/id" => config.command_id(update_message).await,
                     "/note" => config.command_note(update_message).await,
                     "/review" => config.command_review(update_message).await,
                     "/cram" => config.command_review(update_message).await,
