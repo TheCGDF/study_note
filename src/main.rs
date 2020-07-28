@@ -24,7 +24,7 @@ async fn main() {
                     "/id" => config.command_id(update_message).await,
                     "/note" => config.command_note(update_message).await,
                     "/review" => config.command_review(update_message).await,
-                    "/cram" => config.command_review(update_message).await,
+                    "/cram" => config.command_cram(update_message).await,
                     "/my" => config.command_my(&update_message, params).await,
                     "/delete" => config.command_delete(&update_message, params).await,
                     "/lock" => config.command_lock(update_message).await,
