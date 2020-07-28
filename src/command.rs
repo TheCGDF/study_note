@@ -1,5 +1,5 @@
 use telegram_bot::{Message, CanReplySendMessage, MessageOrChannelPost, User, ToMessageId, ForwardMessage, ChatId, SendMessage, ParseMode, MessageId, MessageChat, DeleteMessage, MessageText, ChatMember, GetChatAdministrators};
-use crate::config::{Config, CONFIG};
+use crate::config::Config;
 use harsh::Harsh;
 use lazy_static::lazy_static;
 use crate::API;
@@ -9,7 +9,7 @@ use rand::seq::SliceRandom;
 
 lazy_static! {
     static ref HARSH :Harsh = Harsh::builder()
-        .salt(CONFIG.lock().unwrap().token.as_bytes())
+        .salt(crate::config::load().token)
         .length(8)
         .build()
         .unwrap();
