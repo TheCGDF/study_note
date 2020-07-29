@@ -279,7 +279,7 @@ impl Config {
                         let _ = API.send(update_message.text_reply("以1为起始页")).await;
                         return;
                     }
-                    let page_total = notes.len() / 5 + 1;
+                    let pages = (notes.len() as i64 - 1) / 5 + 1;
                     if (page - 1) * 5 >= notes.len() {
                         notes.clear();
                     } else if notes.len() > 1 {
@@ -292,7 +292,7 @@ impl Config {
                         format!(
                             "第{}/{}页：{}",
                             page,
-                            page_total,
+                            pages,
                             notes_hash.join(" "))
                     )).await;
                     for note in notes {
@@ -315,7 +315,7 @@ impl Config {
                         let _ = API.send(update_message.text_reply("以1为起始页")).await;
                         return;
                     }
-                    let page_total = answers.len() / 5 + 1;
+                    let pages = (answers.len() as i64 - 1) / 5 + 1;
                     if (page - 1) * 5 >= answers.len() {
                         answers.clear();
                     } else if answers.len() > 1 {
@@ -328,7 +328,7 @@ impl Config {
                         format!(
                             "第{}/{}页：{}",
                             page,
-                            page_total,
+                            pages,
                             answers_hash.join(" "))
                     )).await;
                     for answer in answers {
