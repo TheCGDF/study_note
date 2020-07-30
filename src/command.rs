@@ -7,6 +7,7 @@ use rand::Rng;
 use std::cmp::min;
 use rand::seq::SliceRandom;
 use chrono::{Utc, Duration};
+use std::collections::HashSet;
 
 lazy_static! {
     static ref HARSH :Harsh = Harsh::builder()
@@ -28,7 +29,7 @@ impl Config {
             }
         }
         let mut rng = rand::thread_rng();
-        if rng.gen_range(0, 4) != 0 {
+        if rng.gen_range(0, 8) != 0 {
             return;
         }
         let converted = simplet2s::convert(&data.to_lowercase());
@@ -171,12 +172,16 @@ impl Config {
         if last_message_result.is_err() {
             return;
         }
-        let params_converted: Vec<String> = params[1..].iter().map(|keyword|
+        let params_converted: HashSet<String> = params[1..].iter().map(|keyword|
             simplet2s::convert(&keyword.to_lowercase())
-        ).collect();
+        ).into_iter().collect();
         let _ = API.send(SendMessage::new(
             ChatId::new(self.group),
-            format!("——[{0}](tg://user?id={0}) {1}", user, params_converted.join(" ")),
+            format!(
+                "——[{0}](tg://user?id={0}) {1}",
+                user,
+                params_converted.clone().into_iter().collect::<Vec<String>>().join(" ")
+            ),
         ).parse_mode(ParseMode::Markdown)).await;
         let answer: Message = last_message_result.unwrap();
         let answer_id: i64 = answer.id.into();
@@ -305,7 +310,7 @@ impl Config {
                 "answers" => {
                     let mut answers: Vec<(i64, Vec<String>)> = self.answers.iter()
                         .filter_map(|answer| if answer.1 == user_id {
-                            Some((answer.0, answer.2.clone()))
+                            Some((answer.0, answer.2.clone().into_iter().collect()))
                         } else {
                             None
                         })

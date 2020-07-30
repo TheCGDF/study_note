@@ -16,7 +16,7 @@ pub struct Config {
     pub group: i64,
     pub locks: HashSet<i64>,
     pub notes: Vec<(i64, i64)>,
-    pub answers: Vec<(i64, i64, Vec<String>)>,
+    pub answers: Vec<(i64, i64, HashSet<String>)>,
     pub chats: HashMap<i64, (bool, DateTime<Utc>)>,
 }
 
