@@ -1,4 +1,4 @@
-use telegram_bot::{Message, CanReplySendMessage, MessageOrChannelPost, User, ToMessageId, ForwardMessage, ChatId, SendMessage, ParseMode, MessageId, MessageChat, DeleteMessage, MessageText, ChatMember, GetChatAdministrators};
+use telegram_bot::{Message, CanReplySendMessage, MessageOrChannelPost, ToMessageId, ForwardMessage, ChatId, SendMessage, ParseMode, MessageId, MessageChat, DeleteMessage, MessageText, ChatMember, GetChatAdministrators};
 use crate::config::Config;
 use harsh::Harsh;
 use lazy_static::lazy_static;
@@ -159,9 +159,15 @@ impl Config {
             return;
         }
         let replied = update_message.reply_to_message.clone().unwrap();
-        if let MessageOrChannelPost::Message(Message { from: User { username: Some(ref username), .. }, .. }) = *replied {
-            if username == self.name.trim_start_matches('@') {
-                let _ = API.send(update_message.text_reply("傻逼，给爷爬🔪")).await;
+        if let MessageOrChannelPost::Message(ref message) = *replied {
+            if let Some(ref username) = message.from.username {
+                if username == self.name.trim_start_matches('@') {
+                    let _ = API.send(update_message.text_reply("傻逼，给爷爬🔪")).await;
+                    return;
+                }
+            }
+            if message.forward.is_some() {
+                let _ = API.send(update_message.text_reply("不允许操作转发的消息呢🙊")).await;
                 return;
             }
         }
@@ -376,9 +382,15 @@ impl Config {
             return;
         }
         let replied = update_message.reply_to_message.clone().unwrap();
-        if let MessageOrChannelPost::Message(Message { from: User { username: Some(ref username), .. }, .. }) = *replied {
-            if username == self.name.trim_start_matches('@') {
-                let _ = API.send(update_message.text_reply("傻逼，给爷爬🔪")).await;
+        if let MessageOrChannelPost::Message(ref message) = *replied {
+            if let Some(ref username) = message.from.username {
+                if username == self.name.trim_start_matches('@') {
+                    let _ = API.send(update_message.text_reply("傻逼，给爷爬🔪")).await;
+                    return;
+                }
+            }
+            if message.forward.is_some() {
+                let _ = API.send(update_message.text_reply("不允许操作转发的消息呢🙊")).await;
                 return;
             }
         }
