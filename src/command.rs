@@ -209,6 +209,10 @@ impl Config {
         let admins: Vec<ChatMember> = API.send(
             GetChatAdministrators::new(ChatId::new(self.group))
         ).await.unwrap_or(Vec::new());
+        if !admins.iter().any(|admin| admin.user == update_message.from) ||
+            update_message.reply_to_message.is_none() {
+            return;
+        }
         let replied = update_message.reply_to_message.clone().unwrap();
         let chat: i64 = update_message.chat.id().into();
         match *replied {
@@ -217,34 +221,27 @@ impl Config {
             }
             MessageOrChannelPost::Message(message) => {
                 if chat != self.group {
-                    if !admins.iter().any(|admin| admin.user == update_message.from) ||
-                        update_message.reply_to_message.is_none() {
-                        return;
-                    }
                     self.locks.insert(message.from.id.into());
                     self.save();
                     let _ = API.send(update_message.text_reply("笔记已对其上锁🔒")).await;
                     return;
                 }
-                if admins.iter().any(|admin| admin.user == update_message.from) &&
-                    update_message.reply_to_message.is_some() {
-                    if let Ok(to_lock) = message.text().unwrap()["——".len()..]
-                        .split_whitespace().collect::<Vec<&str>>()[0]
-                        .parse::<i64>() {
-                        self.locks.insert(to_lock);
-                        let message_id: i64 = message.id.into();
-                        let _ = API.send(DeleteMessage::new(
-                            ChatId::new(self.group),
-                            MessageId::new(message_id - 1),
-                        )).await;
-                        let _ = API.send(DeleteMessage::new(
-                            ChatId::new(self.group),
-                            MessageId::new(message_id),
-                        )).await;
-                        self.notes.retain(|&note| note.0 != message_id - 1);
-                        self.answers.retain(|answer| answer.0 != message_id - 1);
-                        self.save();
-                    }
+                if let Ok(to_lock) = message.text().unwrap()["——".len()..]
+                    .split_whitespace().collect::<Vec<&str>>()[0]
+                    .parse::<i64>() {
+                    self.locks.insert(to_lock);
+                    let message_id: i64 = message.id.into();
+                    let _ = API.send(DeleteMessage::new(
+                        ChatId::new(self.group),
+                        MessageId::new(message_id - 1),
+                    )).await;
+                    let _ = API.send(DeleteMessage::new(
+                        ChatId::new(self.group),
+                        MessageId::new(message_id),
+                    )).await;
+                    self.notes.retain(|&note| note.0 != message_id - 1);
+                    self.answers.retain(|answer| answer.0 != message_id - 1);
+                    self.save();
                 }
                 let _ = API.send(DeleteMessage::new(
                     ChatId::new(self.group),
