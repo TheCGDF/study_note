@@ -222,12 +222,11 @@ impl Config {
                     return;
                 }
                 if admins.iter().any(|admin| admin.user == update_message.from) &&
-                    update_message.reply_to_message.is_none() {
-                    let user_result = message.text().unwrap()["——".len()..]
+                    update_message.reply_to_message.is_some() {
+                    if let Ok(to_lock) = message.text().unwrap()["——".len()..]
                         .split_whitespace().collect::<Vec<&str>>()[0]
-                        .parse::<i64>();
-                    if user_result.is_ok() {
-                        self.locks.insert(user_result.unwrap());
+                        .parse::<i64>() {
+                        self.locks.insert(to_lock);
                         let message_id: i64 = message.id.into();
                         let _ = API.send(DeleteMessage::new(
                             ChatId::new(self.group),
@@ -239,7 +238,7 @@ impl Config {
                         )).await;
                         self.notes.retain(|&note| note.0 != message_id - 1);
                         self.answers.retain(|answer| answer.0 != message_id - 1);
-                        self.save()
+                        self.save();
                     }
                 }
                 let _ = API.send(DeleteMessage::new(
@@ -304,9 +303,9 @@ impl Config {
                     }
                 }
                 "answers" => {
-                    let mut answers: Vec<i64> = self.answers.iter()
+                    let mut answers: Vec<(i64, Vec<String>)> = self.answers.iter()
                         .filter_map(|answer| if answer.1 == user_id {
-                            Some(answer.0)
+                            Some((answer.0, answer.2.clone()))
                         } else {
                             None
                         })
@@ -321,8 +320,8 @@ impl Config {
                     } else if answers.len() > 1 {
                         answers = answers[(page - 1) * 5..min(page * 5, answers.len())].to_owned();
                     }
-                    let answers_hash: Vec<String> = answers.iter().map(|&answer|
-                        HARSH.encode(&[answer as u64])
+                    let answers_hash: Vec<String> = answers.iter().map(|answer|
+                        format!("{}<{}>", HARSH.encode(&[answer.0 as u64]), answer.1.join(" "))
                     ).collect();
                     let _ = API.send(update_message.text_reply(
                         format!(
@@ -333,7 +332,7 @@ impl Config {
                     )).await;
                     for answer in answers {
                         let _ = API.send(ForwardMessage::new(
-                            MessageId::new(answer),
+                            MessageId::new(answer.0),
                             ChatId::new(self.group.into()),
                             &update_message.chat,
                         )).await;
