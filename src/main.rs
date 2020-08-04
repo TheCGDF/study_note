@@ -1,7 +1,7 @@
 pub mod command;
 pub mod config;
 
-use telegram_bot::{UpdateKind, MessageKind, Api, Update};
+use telegram_bot::{UpdateKind, MessageKind, Api, Update, GetMe};
 use futures::StreamExt;
 use lazy_static::lazy_static;
 
@@ -20,7 +20,8 @@ async fn main() {
                 if params.is_empty() {
                     continue;
                 }
-                match params[0].replace(&config.name, "").as_str() {
+                let username = API.send(GetMe {}).await.unwrap().username.unwrap();
+                match params[0].replace(&format!("@{}", username), "").as_str() {
                     "/id" => config.command_id(update_message).await,
                     "/note" => config.command_note(update_message).await,
                     "/review" => config.command_review(update_message).await,

@@ -12,7 +12,6 @@ use chrono::{DateTime, Utc};
 #[serde(rename_all = "PascalCase")]
 pub struct Config {
     pub token: String,
-    pub name: String,
     pub group: i64,
     pub locks: HashSet<i64>,
     pub notes: Vec<(i64, i64)>,
