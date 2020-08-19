@@ -1,3 +1,6 @@
+本体：[@study_note_bot](https://t.me/study_note_bot)
+
+频道：[@study_note_channel](https://t.me/study_note_channel)
 ## 命令
 | 命令 | 说明 |
 | :--- | :--- |
