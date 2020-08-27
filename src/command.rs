@@ -196,19 +196,20 @@ impl Config {
         let group_option = self.chats.get(&update_message.chat.id().into());
         if let Some(group) = group_option {
             if !group.0 {
-                let _ = API.send(update_message.text_reply(
+                let _ = API.send(update_message.reply_to_message.as_ref().unwrap().text_reply(
                     format!(
-                        "设置完成✅，id是{}，但bot在当前群组中为安静模式，因此不会触发回复🔕",
-                        HARSH.encode(&[answer_id as u64])
+                        "这条消息被[{0}](tg://user?id={0})设置为应答了哦✅，id是{1}，但bot在当前群组中为安静模式，因此不会触发回复🔕",
+                        user, HARSH.encode(&[answer_id as u64])
                     )
-                )).await;
+                ).parse_mode(ParseMode::Markdown)).await;
                 return;
             }
         }
-        let _ = API.send(update_message.text_reply(
-            format!("设置完成✅，id是{}", HARSH.encode(&[answer_id as u64])
+        let _ = API.send(update_message.reply_to_message.as_ref().unwrap().text_reply(
+            format!("这条消息被[{0}](tg://user?id={0})设置为应答了哦✅，id是{1}",
+                    user, HARSH.encode(&[answer_id as u64])
             )
-        )).await;
+        ).parse_mode(ParseMode::Markdown)).await;
     }
 
     pub async fn command_lock(&mut self, update_message: Message) {
@@ -409,12 +410,12 @@ impl Config {
         let noted_id: i64 = last_message.id.into();
         self.notes.push((noted_id, update_message.from.id.into()));
         self.save();
-        let _ = API.send(update_message.text_reply(
+        let _ = API.send(update_message.reply_to_message.unwrap().text_reply(
             format!(
-                "小本本记好了哦📝，id是{}",
-                HARSH.encode(&[noted_id as u64])
+                "这条消息被[{0}](tg://user?id={0})记到小本本上了哦📝，id是{1}",
+                user, HARSH.encode(&[noted_id as u64])
             )
-        )).await;
+        ).parse_mode(ParseMode::Markdown)).await;
     }
 
     pub async fn command_review(&self, update_message: Message) {

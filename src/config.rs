@@ -14,8 +14,11 @@ pub struct Config {
     pub token: String,
     pub group: i64,
     pub locks: HashSet<i64>,
+    //<group id, user>
     pub notes: Vec<(i64, i64)>,
+    //<group id, user, keywords>
     pub answers: Vec<(i64, i64, HashSet<String>)>,
+    //<group id, noisy, last>
     pub chats: HashMap<i64, (bool, DateTime<Utc>)>,
 }
 
